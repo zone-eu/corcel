@@ -1,11 +1,12 @@
 <?php
 
-namespace Corcel\Traits;
+namespace Corcel\Concerns;
 
 use Corcel\Model\Meta\PostMeta;
 use Corcel\Model\Post;
 use Illuminate\Database\Eloquent\Builder;
 use ReflectionClass;
+use UnexpectedValueException;
 
 /**
  * Trait HasMetaFields
@@ -13,26 +14,17 @@ use ReflectionClass;
  * @package Corcel\Traits
  * @author Junior Grossi <juniorgro@gmail.com>
  */
-trait HasMetaFields
+trait MetaFields
 {
     /**
      * @var array
      */
-    private $customMetaClasses = [
-        \Corcel\Model\Comment::class,
-        \Corcel\Model\Term::class,
-        \Corcel\Model\User::class,
+    protected $builtInClasses = [
+        \Corcel\Model\Comment::class => \Corcel\Model\Meta\CommentMeta::class,
+        \Corcel\Model\Post::class    => \Corcel\Model\Meta\PostMeta::class,
+        \Corcel\Model\Term::class    => \Corcel\Model\Meta\TermMeta::class,
+        \Corcel\Model\User::class    => \Corcel\Model\Meta\UserMeta::class,
     ];
-
-    /**
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
-     */
-    public function meta()
-    {
-        return $this->hasMany(
-            $this->getClassName(), $this->getFieldName()
-        );
-    }
 
     /**
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
@@ -40,6 +32,54 @@ trait HasMetaFields
     public function fields()
     {
         return $this->meta();
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function meta()
+    {
+        return $this->hasMany($this->getMetaClass(), $this->getMetaForeignKey());
+    }
+
+    /**
+     * @return string
+     *
+     * @throws \UnexpectedValueException
+     */
+    protected function getMetaClass()
+    {
+        foreach ($this->builtInClasses as $model => $meta) {
+            if ($this instanceof $model) {
+                return $meta;
+            }
+        }
+
+        throw new UnexpectedValueException(sprintf(
+            '%s must extends one of Corcel built-in models: Comment, Post, Term or User.',
+            static::class
+        ));
+    }
+
+    /**
+     * @return string
+     *
+     * @throws \UnexpectedValueException
+     */
+    protected function getMetaForeignKey()
+    {
+        foreach ($this->builtInClasses as $model => $meta) {
+            if ($this instanceof $model) {
+                $basename = class_basename($model);
+
+                return sprintf('%s_id', strtolower($basename));
+            }
+        }
+
+        throw new UnexpectedValueException(sprintf(
+            '%s must extends one of Corcel built-in models: Comment, Post, Term or User.',
+            static::class
+        ));
     }
 
     /**
@@ -68,6 +108,16 @@ trait HasMetaFields
         }
 
         return $query;
+    }
+
+    /**
+     * @param string $key
+     * @param mixed $value
+     * @return bool
+     */
+    public function saveField($key, $value)
+    {
+        return $this->saveMeta($key, $value);
     }
 
     /**
@@ -110,11 +160,11 @@ trait HasMetaFields
     /**
      * @param string $key
      * @param mixed $value
-     * @return bool
+     * @return \Illuminate\Database\Eloquent\Model
      */
-    public function saveField($key, $value)
+    public function createField($key, $value)
     {
-        return $this->saveMeta($key, $value);
+        return $this->createMeta($key, $value);
     }
 
     /**
@@ -151,50 +201,15 @@ trait HasMetaFields
     }
 
     /**
-     * @param string $key
-     * @param mixed $value
-     * @return \Illuminate\Database\Eloquent\Model
+     * @param string $attribute
+     * @return mixed|null
      */
-    public function createField($key, $value)
+    public function getMeta($attribute)
     {
-        return $this->createMeta($key, $value);
-    }
-
-    /**
-     * @return string
-     */
-    private function getClassName()
-    {
-        $className = sprintf(
-            'Corcel\\Model\\Meta\\%sMeta', $this->getCallerClassName()
-        );
-
-        return class_exists($className) ?
-            $className :
-            PostMeta::class;
-    }
-
-    /**
-     * @return string
-     */
-    private function getFieldName()
-    {
-        $callerName = $this->getCallerClassName();
-
-        return sprintf('%s_id', strtolower($callerName));
-    }
-
-    /**
-     * @return string
-     */
-    private function getCallerClassName()
-    {
-        $class = static::class;
-
-        if (!in_array($class, $this->customMetaClasses)) {
-            $class = Post::class;
+        if ($meta = $this->meta->{$attribute}) {
+            return $meta;
         }
 
-        return (new ReflectionClass($class))->getShortName();
+        return null;
     }
 }

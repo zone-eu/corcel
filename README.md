@@ -8,9 +8,11 @@ Corcel
 [![Travis](https://travis-ci.org/corcel/corcel.svg?branch=master)](https://travis-ci.org/corcel/corcel?branch=master)
 [![Packagist](https://img.shields.io/packagist/v/jgrossi/corcel.svg)](https://packagist.org/packages/jgrossi/corcel)
 [![Packagist](https://img.shields.io/packagist/dt/jgrossi/corcel.svg)](https://github.com/jgrossi/corcel/releases)
-[![Coverage Status](https://coveralls.io/repos/github/corcel/corcel/badge.svg?branch=master)](https://coveralls.io/github/corcel/corcel?branch=master)
+[![Test Coverage](https://codeclimate.com/github/corcel/corcel/badges/coverage.svg)](https://codeclimate.com/github/corcel/corcel/coverage)
 
-<a href='https://ko-fi.com/A36513JF' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://az743702.vo.msecnd.net/cdn/kofi4.png?v=0' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
+<a href="https://ko-fi.com/A36513JF" target="_blank">
+  <img height="36" style="border:0px;height:36px;" src="https://az743702.vo.msecnd.net/cdn/kofi4.png?v=0" border="0" alt="Buy Me a Coffee at ko-fi.com" />
+</a>
 
 [![Twitter Follow](https://img.shields.io/twitter/follow/corcelphp.svg?style=social&label=Follow)](http://twitter.com/CorcelPHP)
 
@@ -55,6 +57,7 @@ This make possible to use WordPress as your CMS of choice and using Laravel in t
  5.3.x    | 2.3.x
  5.4.x    | 2.4.x
  5.5.x    | 2.5.x
+ 5.6.x    | 2.6.x
 
 # <a id="install"></a> Installing Corcel
 
@@ -205,7 +208,7 @@ Optionally you can create your own `Post` model (or Page, or whatever) which ext
 
 namespace App;
 
-use Corcel\Post as Corcel;
+use Corcel\Model\Post as Corcel;
 
 class Post extends Corcel
 {
@@ -463,6 +466,8 @@ Post::addShortcode('gallery', function ($shortcode) {
 $post = Post::find(1);
 echo $post->content;
 ```
+
+> Laravel 5.5 uses Package Auto-Discovery, so doesn't require you to manually add the ServiceProvider
 
 If you are using Laravel, we suggest adding your shortcodes handlers in `App\Providers\AppServiceProvider`, in the `boot` method.
 
@@ -726,7 +731,7 @@ Before you submit your Pull Request (PR) consider the following guidelines:
 
 - Fork https://github.com/corcel/corcel in Github;
 
-- Clone your forked repository (not Corcel's) locally and create your own branch based on `dev` one: `git checkout -b my-fix-branch dev`;
+- Clone your forked repository (not Corcel's) locally and create your own branch based on the version you want to fix (`2.1`, `2.2`, `2.3`, `2.4` or `2.5`): `git checkout -b my-fix-branch 2.5`;
 
 - Make all code changes. Remember here to write at least one test case for any feature you add or any bugfix (if it's not tested yet). Our goal is to have 100% of the code covered by tests, so help us to write a better code ;-) If you don' have experience with tests it's a good opportunity to learn. Just take a look into our tests cases and you'll see how simple they are.
 
@@ -734,7 +739,7 @@ Before you submit your Pull Request (PR) consider the following guidelines:
 
 - Push your new branch to your forked repository, usually `git push origin HEAD` should work;
 
-- In GitHub again, create a Pull Request (PR) from your custom `my-fix-branch` branch (from your forked repository) to `corcel:dev`, not `corcel:master`, please;
+- In GitHub again, create a Pull Request (PR) from your custom `my-fix-branch` branch (from your forked repository) to the related branch (`corcel:2.5`, for example, not `corcel:master`, please;
 
 - Wait for the approval :-)
 
