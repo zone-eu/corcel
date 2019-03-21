@@ -4,6 +4,7 @@ namespace Corcel\Tests\Unit\Model;
 
 use Carbon\Carbon;
 use Corcel\Model\Collection\MetaCollection;
+use Corcel\Model\Comment;
 use Corcel\Model\User;
 use Corcel\Model\Post;
 
@@ -14,20 +15,14 @@ use Corcel\Model\Post;
  */
 class UserTest extends \Corcel\Tests\TestCase
 {
-    /**
-     * @test
-     */
-    public function it_is_instance_of_user()
+    public function test_it_is_instance_of_user()
     {
         $user = factory(User::class)->create();
 
         $this->assertInstanceOf(User::class, $user);
     }
 
-    /**
-     * @test
-     */
-    public function it_has_the_correct_id()
+    public function test_it_has_the_correct_id()
     {
         $user = factory(User::class)->create(['ID' => 20]);
 
@@ -35,10 +30,7 @@ class UserTest extends \Corcel\Tests\TestCase
         $this->assertEquals(20, $user->ID);
     }
 
-    /**
-     * @test
-     */
-    public function it_can_be_ordered()
+    public function test_it_can_be_ordered()
     {
         $date = Carbon::now()->subYear();
 
@@ -52,10 +44,7 @@ class UserTest extends \Corcel\Tests\TestCase
         $this->assertEquals($last->ID, $newest->ID);
     }
 
-    /**
-     * @test
-     */
-    public function it_has_multiple_property_aliases()
+    public function test_it_has_multiple_property_aliases()
     {
         $user = factory(User::class)->create();
         $user->saveMeta('nickname', 'foo');
@@ -73,20 +62,14 @@ class UserTest extends \Corcel\Tests\TestCase
         $this->assertEquals($user->user_registered, $user->created_at);
     }
 
-    /**
-     * @test
-     */
-    public function it_has_the_correct_auth_identifier()
+    public function test_it_has_the_correct_auth_identifier()
     {
         $user = factory(User::class)->create();
 
         $this->assertEquals($user->ID, $user->getAuthIdentifier());
     }
 
-    /**
-     * @test
-     */
-    public function it_can_add_meta()
+    public function test_it_can_add_meta()
     {
         $user = factory(User::class)->create();
 
@@ -97,10 +80,7 @@ class UserTest extends \Corcel\Tests\TestCase
         $this->assertInstanceOf(MetaCollection::class, $user->meta);
     }
 
-    /**
-     * @test
-     */
-    public function it_can_update_meta()
+    public function test_it_can_update_meta()
     {
         $user = factory(User::class)->create();
 
@@ -110,10 +90,7 @@ class UserTest extends \Corcel\Tests\TestCase
         $this->assertEquals($user->meta->foo, 'baz');
     }
 
-    /**
-     * @test
-     */
-    public function it_can_update_multiples_metas()
+    public function test_it_can_update_multiples_metas()
     {
         $user = factory(User::class)->create();
 
@@ -128,10 +105,7 @@ class UserTest extends \Corcel\Tests\TestCase
         $this->assertEquals('bar', $user->meta->fee);
     }
 
-    /**
-     * @test
-     */
-    public function it_can_have_a_different_database_connection()
+    public function test_it_can_have_a_different_database_connection()
     {
         $user = factory(User::class)->make();
         $user->setConnection('foo');
@@ -146,10 +120,7 @@ class UserTest extends \Corcel\Tests\TestCase
         });
     }
 
-    /**
-     * @test
-     */
-    public function it_has_meta_scope_with_empty_meta()
+    public function test_it_has_meta_scope_with_empty_meta()
     {
         $id = factory(User::class)->create()->ID;
 
@@ -161,10 +132,7 @@ class UserTest extends \Corcel\Tests\TestCase
         $this->assertEmpty($user);
     }
 
-    /**
-     * @test
-     */
-    public function it_has_meta_scope_with_valid_meta()
+    public function test_it_has_meta_scope_with_valid_meta()
     {
         $user = factory(User::class)->create();
         $user->saveMeta('foo', 'bar');
@@ -177,30 +145,21 @@ class UserTest extends \Corcel\Tests\TestCase
         $this->assertNotEmpty($validUser);
     }
 
-    /**
-     * @test
-     */
-    public function it_has_avatar()
+    public function test_it_has_avatar()
     {
         $user = factory(User::class)->create();
 
         $this->assertEquals('//secure.gravatar.com/avatar/e64c7d89f26bd1972efa854d13d7dd61?d=mm', $user->avatar);
     }
 
-    /**
-     * @test
-     */
-    public function it_has_not_avatar()
+    public function test_it_has_not_avatar()
     {
         $user = factory(User::class)->create(['user_email' => '']);
 
         $this->assertEquals('//secure.gravatar.com/avatar/?d=mm', $user->avatar);
     }
 
-    /**
-     * @test
-     */
-    public function it_children_has_correct_meta_relation()
+    public function test_it_children_has_correct_meta_relation()
     {
         $post = factory(Post::class)->create();
         $post->createMeta('foo', 'bar');
@@ -214,6 +173,25 @@ class UserTest extends \Corcel\Tests\TestCase
         $this->assertEquals($post->ID, $customer->ID);
         $this->assertEquals('foo', $customer->meta->bar);
         $this->assertNull($customer->meta->foo);
+    }
+
+    public function test_missing_relations()
+    {
+        $user = factory(User::class)->create();
+
+        factory(Post::class, 2)->create(['post_author' => $user->ID]);
+        factory(Comment::class, 3)->create(['user_id' => $user->ID]);
+
+        $this->assertCount(2, $user->posts);
+        $this->assertCount(3, $user->comments);
+    }
+
+    public function test_timestamps_methods()
+    {
+        $user = factory(User::class)->create();
+
+        $this->assertEmpty($user->setUpdatedAtAttribute('foo'));
+        $this->assertEmpty($user->setUpdatedAt('foo'));
     }
 }
 
