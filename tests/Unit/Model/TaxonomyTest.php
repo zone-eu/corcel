@@ -5,6 +5,8 @@ namespace Corcel\Tests\Unit\Model;
 use Corcel\Model\Post;
 use Corcel\Model\Taxonomy;
 use Corcel\Model\Term;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 
 /**
  * Class TermTaxonomyTest
@@ -13,10 +15,7 @@ use Corcel\Model\Term;
  */
 class TaxonomyTest extends \Corcel\Tests\TestCase
 {
-    /**
-     * @test
-     */
-    public function it_belongs_to_a_term()
+    public function test_it_belongs_to_a_term()
     {
         $taxonomy = factory(Taxonomy::class)->create([
             'term_id' => 0,
@@ -29,10 +28,7 @@ class TaxonomyTest extends \Corcel\Tests\TestCase
         $this->assertEquals($term->term_id, $taxonomy->term_id);
     }
 
-    /**
-     * @test
-     */
-    public function it_can_filter_taxonomy_by_term()
+    public function test_it_can_filter_taxonomy_by_term()
     {
         $taxonomy = $this->createTaxonomyWithTermsAndPosts();
         $term = $taxonomy->term;
@@ -46,12 +42,9 @@ class TaxonomyTest extends \Corcel\Tests\TestCase
         }
     }
 
-    /**
-     * @test
-     */
-    public function it_can_be_queried_by_name_and_term_slug()
+    public function test_it_can_be_queried_by_name_and_term_slug()
     {
-        $taxonomy = $this->createTaxonomyWithTermsAndPosts();
+        $this->createTaxonomyWithTermsAndPosts();
 
         $foo = Taxonomy::name('foo')->slug('bar')->first();
         $this->assertEquals('Bar', $foo->name);
@@ -63,10 +56,7 @@ class TaxonomyTest extends \Corcel\Tests\TestCase
         });
     }
 
-    /**
-     * @test
-     */
-    public function it_can_be_queries_by_term_as_an_aliases_to_slug()
+    public function test_it_can_be_queries_by_term_as_an_aliases_to_slug()
     {
         $this->createTaxonomyWithTermsAndPosts();
 
@@ -75,10 +65,7 @@ class TaxonomyTest extends \Corcel\Tests\TestCase
         $this->assertEquals('Bar', $foo->name);
     }
 
-    /**
-     * @test
-     */
-    public function it_can_query_taxonomy_by_term_and_get_all_posts_related()
+    public function test_it_can_query_taxonomy_by_term_and_get_all_posts_related()
     {
         $this->createTaxonomyWithTermsAndPosts();
 
@@ -89,24 +76,19 @@ class TaxonomyTest extends \Corcel\Tests\TestCase
         $this->assertEquals('Foo bar', $post->title);
     }
 
-    /**
-     * @test
-     */
-    public function its_first_post_should_have_keywords_if_it_has_taxonomy_and_term()
+    public function test_its_first_post_should_have_keywords_if_it_has_taxonomy_and_term()
     {
         $taxonomy = $this->createTaxonomyWithTermsAndPosts();
 
         $post = $taxonomy->posts->first();
 
-        $this->assertTrue(count($post->keywords) > 0);
+        $this->assertGreaterThan(0, count($post->keywords));
     }
 
-    /**
-     * @test
-     */
-    public function it_has_correct_query_with_callback_in_where()
+    public function test_it_has_correct_query_with_callback_in_where()
     {
-        $query = Category::where(function ($q) {
+        /** @var Builder $query */
+        $query = Category::query()->where(function (Builder $q) {
             $q->where('foo', 'bar');
         });
 
@@ -117,10 +99,29 @@ class TaxonomyTest extends \Corcel\Tests\TestCase
         $this->assertSame($expectedBindings, $query->getBindings());
     }
 
-    /**
-     * @return \Illuminate\Support\Collection
-     */
-    private function createTaxonomyWithTermsAndPosts()
+    public function test_it_has_meta_relation()
+    {
+        /** @var Taxonomy $taxonomy */
+        $taxonomy = factory(Taxonomy::class)->create();
+        /** @var Term $term */
+        $term = $taxonomy->term;
+        $term->saveMeta('foo', 'bar');
+
+        $this->assertNotEmpty($taxonomy->meta);
+        $this->assertEquals('bar', $taxonomy->meta->foo);
+    }
+
+    public function test_it_has_parent()
+    {
+        /** @var Taxonomy $parent */
+        $parent = factory(Taxonomy::class)->create();
+        /** @var Taxonomy $taxonomy */
+        $taxonomy = factory(Taxonomy::class)->create(['parent' => $parent->term_taxonomy_id]);
+
+        $this->assertEquals($parent->fresh(), $taxonomy->parent()->first());
+    }
+
+    private function createTaxonomyWithTermsAndPosts(): Taxonomy
     {
         $taxonomy = factory(Taxonomy::class)->create([
             'taxonomy' => 'foo',
