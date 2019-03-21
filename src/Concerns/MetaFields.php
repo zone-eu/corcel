@@ -2,10 +2,7 @@
 
 namespace Corcel\Concerns;
 
-use Corcel\Model\Meta\PostMeta;
-use Corcel\Model\Post;
 use Illuminate\Database\Eloquent\Builder;
-use ReflectionClass;
 use UnexpectedValueException;
 
 /**
@@ -21,9 +18,9 @@ trait MetaFields
      */
     protected $builtInClasses = [
         \Corcel\Model\Comment::class => \Corcel\Model\Meta\CommentMeta::class,
-        \Corcel\Model\Post::class    => \Corcel\Model\Meta\PostMeta::class,
-        \Corcel\Model\Term::class    => \Corcel\Model\Meta\TermMeta::class,
-        \Corcel\Model\User::class    => \Corcel\Model\Meta\UserMeta::class,
+        \Corcel\Model\Post::class => \Corcel\Model\Meta\PostMeta::class,
+        \Corcel\Model\Term::class => \Corcel\Model\Meta\TermMeta::class,
+        \Corcel\Model\User::class => \Corcel\Model\Meta\UserMeta::class,
     ];
 
     /**
@@ -44,7 +41,6 @@ trait MetaFields
 
     /**
      * @return string
-     *
      * @throws \UnexpectedValueException
      */
     protected function getMetaClass()
@@ -63,16 +59,13 @@ trait MetaFields
 
     /**
      * @return string
-     *
      * @throws \UnexpectedValueException
      */
-    protected function getMetaForeignKey()
+    protected function getMetaForeignKey(): string
     {
         foreach ($this->builtInClasses as $model => $meta) {
             if ($this instanceof $model) {
-                $basename = class_basename($model);
-
-                return sprintf('%s_id', strtolower($basename));
+                return sprintf('%s_id', strtolower(class_basename($model)));
             }
         }
 
@@ -86,29 +79,41 @@ trait MetaFields
      * @param Builder $query
      * @param string $meta
      * @param mixed $value
+     * @param string $operator
      * @return Builder
      */
-    public function scopeHasMeta(Builder $query, $meta, $value = null)
+    public function scopeHasMeta(Builder $query, $meta, $value = null, string $operator = '=')
     {
         if (!is_array($meta)) {
             $meta = [$meta => $value];
         }
 
         foreach ($meta as $key => $value) {
-            $query->whereHas('meta', function ($query) use ($key, $value) {
-                if (is_string($key)) {
-                    $query->where('meta_key', $key);
-
-                    return is_null($value) ? $query : // 'foo' => null
-                        $query->where('meta_value', $value); // 'foo' => 'bar'
+            $query->whereHas('meta', function (Builder $query) use ($key, $value, $operator) {
+                if (!is_string($key)) {
+                    return $query->where('meta_key', $operator, $value);
                 }
+                $query->where('meta_key', $operator, $key);
 
-                return $query->where('meta_key', $value); // 0 => 'foo'
+                return is_null($value) ? $query :
+                    $query->where('meta_value', $operator, $value);
             });
         }
 
         return $query;
     }
+
+    /**
+     * @param Builder $query
+     * @param string $meta
+     * @param mixed $value
+     * @return Builder
+     */
+    public function scopeHasMetaLike(Builder $query, $meta, $value = null)
+    {
+        return $this->scopeHasMeta($query, $meta, $value, 'like');
+    }
+
 
     /**
      * @param string $key
@@ -131,7 +136,6 @@ trait MetaFields
             foreach ($key as $k => $v) {
                 $this->saveOneMeta($k, $v);
             }
-
             $this->load('meta');
 
             return true;
@@ -151,7 +155,6 @@ trait MetaFields
             ->firstOrNew(['meta_key' => $key]);
 
         $result = $meta->fill(['meta_value' => $value])->save();
-
         $this->load('meta');
 
         return $result;
@@ -194,7 +197,6 @@ trait MetaFields
             'meta_key' => $key,
             'meta_value' => $value,
         ]);
-
         $this->load('meta');
 
         return $meta;

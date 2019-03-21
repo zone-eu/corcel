@@ -64,6 +64,7 @@ class User extends Model implements Authenticatable, CanResetPassword
         'nickname' => ['meta' => 'nickname'],
         'first_name' => ['meta' => 'first_name'],
         'last_name' => ['meta' => 'last_name'],
+        'description' => ['meta' => 'description'],
         'created_at' => 'user_registered',
     ];
 
@@ -158,7 +159,7 @@ class User extends Model implements Authenticatable, CanResetPassword
     {
         $tokenName = $this->getRememberTokenName();
 
-        $this->meta->{$tokenName} = $value;
+        $this->saveMeta($tokenName, $value);
     }
 
     /**
