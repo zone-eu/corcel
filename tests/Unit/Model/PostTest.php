@@ -11,6 +11,7 @@ use Corcel\Model\Term;
 use Corcel\Model\User;
 use Corcel\Shortcode;
 use Illuminate\Support\Arr;
+use Illuminate\Pagination\Paginator;
 use Thunder\Shortcode\Shortcode\ShortcodeInterface;
 
 /**
@@ -31,7 +32,7 @@ class PostTest extends \Corcel\Tests\TestCase
     {
         $post = factory(Post::class)->create();
 
-        $this->assertInternalType('int', $post->ID);
+        $this->assertIsInt($post->ID);
         $this->assertGreaterThan(0, $post->ID);
     }
 
@@ -280,6 +281,7 @@ class PostTest extends \Corcel\Tests\TestCase
 
     public function test_it_can_be_paginated()
     {
+        Paginator::useBootstrap();
         $post = factory(Post::class)->create();
         factory(Post::class)->create();
         factory(Post::class)->create();
@@ -293,7 +295,7 @@ class PostTest extends \Corcel\Tests\TestCase
         $this->assertEquals(3, $paginator->total());
         $this->assertInstanceOf(Post::class, $firstPost);
         $this->assertEquals($post->post_title, $firstPost->post_title);
-        $this->assertStringStartsWith('<ul class="pagination"', $paginator->toHtml());
+        $this->assertRegExp('/\<nav\>\s*\<ul class="pagination/', $paginator->toHtml());
     }
     
     public function test_it_can_have_taxonomy()
@@ -555,7 +557,8 @@ class PostTest extends \Corcel\Tests\TestCase
         $post->taxonomies()->attach(
             factory(Taxonomy::class)->create([
                 'taxonomy' => 'foo',
-            ])->term_taxonomy_id, [
+            ])->term_taxonomy_id,
+            [
                 'term_order' => 0,
             ]
         );
@@ -599,7 +602,8 @@ class PostTest extends \Corcel\Tests\TestCase
                         'slug' => $name,
                     ])->term_id;
                 },
-            ])->term_taxonomy_id, [
+            ])->term_taxonomy_id,
+            [
                 'term_order' => 0,
             ]
         );

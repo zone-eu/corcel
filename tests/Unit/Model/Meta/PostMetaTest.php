@@ -24,7 +24,7 @@ class PostMetaTest extends \Corcel\Tests\TestCase
         $meta = factory(PostMeta::class)->create();
 
         $this->assertNotNull($meta);
-        $this->assertInternalType('int', $meta->meta_id);
+        $this->assertIsInt($meta->meta_id);
     }
 
     public function test_it_has_post_relation()
@@ -117,6 +117,16 @@ class PostMetaTest extends \Corcel\Tests\TestCase
         $this->assertNotNull($newPost);
         $this->assertEquals($post->title, $newPost->title);
         $this->assertEquals($post->ID, $newPost->ID);
+    }
+
+    public function test_higher_order_functions_can_be_executed()
+    {
+        $post = factory(Post::class)->create();
+        $post->saveMeta('one', 'two');
+        $post->saveMeta('three', 'four');
+
+        $this->assertEquals($post->meta->map->getQueueableId()->all(), [1, 2]);
+        $this->assertEquals($post->meta->one, 'two');
     }
 
     /**

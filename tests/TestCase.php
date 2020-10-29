@@ -8,7 +8,6 @@ use Corcel\Tests\Unit\Model\FakePage;
 use Corcel\Tests\Unit\Model\FakePost;
 use Corcel\Tests\Unit\Model\FakeShortcode;
 use Illuminate\Contracts\Auth\Authenticatable;
-use Orchestra\Database\ConsoleServiceProvider;
 
 /**
  * Class TestCase
@@ -23,15 +22,17 @@ class TestCase extends \Orchestra\Testbench\TestCase
 
         $this->loadMigrationsFrom([
             '--database' => 'foo',
-            '--realpath' => __DIR__.'/database/migrations',
+            '--realpath' => true,
+            '--path' => __DIR__ . '/database/migrations',
         ]);
 
         $this->loadMigrationsFrom([
             '--database' => 'wp',
-            '--realpath' => __DIR__.'/database/migrations',
+            '--realpath' => true,
+            '--path' => __DIR__ . '/database/migrations',
         ]);
 
-        $this->withFactories(__DIR__.'/database/factories');
+        $this->withFactories(__DIR__ . '/database/factories');
     }
 
     /**
@@ -104,7 +105,6 @@ class TestCase extends \Orchestra\Testbench\TestCase
     protected function getPackageProviders($app): array
     {
         return [
-            ConsoleServiceProvider::class,
             CorcelServiceProvider::class,
         ];
     }
